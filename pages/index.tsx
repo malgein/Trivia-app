@@ -1,11 +1,10 @@
 import React,{useState} from 'react'
-import Image from 'next/image'
-import styles from '../styles/Home.module.css'
 import QuestionCard from '../components/Questioncard'
 import { fetchQuizQuestions } from '../API'
 import { Difficulty, QuestionState} from '../API'
+import styles from '../styles/Home.module.css'
 
-type AnswerObject = {
+export type AnswerObject = {
   question: string;
   answer: string;
   correct: boolean;
@@ -14,7 +13,7 @@ type AnswerObject = {
 
 const TOTAL_QUESTIONS = 10
 
-export default function Home() {
+const Home: React.FC = () => {
 
   const [loading, setLoading] = useState(false)
   const [questions, setQuestions] = useState<QuestionState[]>([])
@@ -37,38 +36,60 @@ export default function Home() {
   }
 
   const checkAnswer = (e:React.MouseEvent<HTMLButtonElement>) =>{
+    if(!gameOver){
+      //users answer
+      const answer = e.currentTarget.value
+      //check answer againts the correct answer
+      const correct = questions[number].correct_answer === answer
 
+      if(correct) setScore((prev)=> prev +1)
+      //save answer in array for user answer
+      const answerObject = {
+        question: questions[number].question,
+        answer,
+        correct,
+        correctAnswer: questions[number].correct_answer,
+      }
+      setUserAnswers(prev => [...prev, answerObject])
+    }
   }
 
   const nextQuestion = () => {
-
+    const nextQuestion = number + 1
+    if(nextQuestion=== TOTAL_QUESTIONS){
+      setGameOver(true)
+    }else{
+      setNumber(nextQuestion)
+    }
   }
 
   return (
-   <div className={styles.App}>
-    <h1>REACT QUIZ</h1>
-    {gameOver || userAnswers.length === TOTAL_QUESTIONS ? (
-      <button className={styles.start} onClick={startTrivia}>Start</button>
-    ): null}
-    {!gameOver ? <p className={styles.score}>Score</p> : null}
-    {loading && <p>Loading Questions . . .</p>}
-    {!loading && !gameOver && (
-      <QuestionCard 
-      questionNr={number + 1}
-      totalQuestions={TOTAL_QUESTIONS}
-      question={questions[number].question}
-      answers={questions[number].answers}
-      userAnswer={userAnswers ? userAnswers[number] : undefined}
-      callback={checkAnswer}
-    />
-    )}
-    {
-      !gameOver && !loading && userAnswers.length===number + 1 && number !== TOTAL_QUESTIONS -1 ?(
-        <button className={styles.next} onClick={nextQuestion}>Next Question</button>
-    ): null}
-   </div>
+   <>
+    <div className={styles.main}>
+      <h1>REACT QUIZ</h1>
+      {gameOver || userAnswers.length === TOTAL_QUESTIONS ? (
+        <button  onClick={startTrivia} className={styles.start}>Start</button>
+      ): null}
+      {!gameOver ? <p className={styles.score}>Score: {score}</p> : null}
+      {loading && <p>Loading Questions . . .</p>}
+      {!loading && !gameOver && (
+        <QuestionCard 
+        questionNr={number + 1}
+        totalQuestions={TOTAL_QUESTIONS}
+        question={questions[number].question}
+        answers={questions[number].answers}
+        userAnswer={userAnswers ? userAnswers[number] : undefined}
+        callback={checkAnswer}
+      />
+      )}
+      {
+        !gameOver && !loading && userAnswers.length===number + 1 && number !== TOTAL_QUESTIONS -1 ?(
+          <button onClick={nextQuestion} className={styles.next}>Next Question</button>
+      ): null}
+    </div>
+   </>
   )
 }
 
-/* */ 
+export default Home
     
